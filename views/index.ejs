@@ -1,0 +1,106 @@
+<!doctype html>
+<html ng-app="app">
+<head>
+    <!-- Reference AngularJS and D3.js -->
+    <script src="node_modules/angular/angular.min.js"></script>
+    <script src="node_modules/d3/d3.min.js"></script>
+    <!-- Reference n3-line-chart -->
+    <script src="node_modules/n3-charts/build/LineChart.js"></script>
+    <link rel="stylesheet" href="node_modules/n3-charts/build/LineChart.css">
+    <link rel="stylesheet" href="stylesheets/style.css">
+    <script type="text/javascript" src="javascripts/main.js"></script>
+  </head>
+  <body ng-controller='MainCtrl'>
+    <div class="my-chart">
+      <linechart data="data" options="options"></linechart>
+    </div>
+    <script type="text/javascript">
+     var t = -1;
+     var n = 400;
+     var v = 0;
+     var data = d3.range(n).map(next);
+
+     function next () {
+         return {
+             time: ++t,
+             value: v = Math.random()*20
+         };
+     }
+
+     var margin = {top: 10, right: 10, bottom: 20, left: 40},
+         width = window.innerWidth - margin.left - margin.right,
+         height = 500 - margin.top - margin.bottom;
+
+     var x = d3.scale.linear()
+         .domain([0, n - 1])
+         .range([0, width]);
+
+     var y = d3.scale.linear()
+         .domain([0, 20])
+         .range([height, 0]);
+
+     var line = d3.svg.line()
+         .x(function(d, i) { /*console.log(d.time);*/ return x(d.time); })
+         .y(function(d, i) { return y(d.value); });
+
+     var svg = d3.select("body").append("svg")
+         .attr("width", width + margin.left + margin.right)
+         .attr("height", height + margin.top + margin.bottom);
+
+     var g = svg.append("g")
+         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+     var graph = g.append("svg")
+         .attr("width", width)
+         .attr("height", height + margin.top + margin.bottom);
+
+     var xAxis = d3.svg.axis().scale(x).orient("bottom");
+     var axis = graph.append("g")
+         .attr("class", "x axis")
+         .attr("transform", "translate(0," + height + ")")
+         .call(xAxis);
+
+     g.append("g")
+         .attr("class", "y axis")
+         .call(d3.svg.axis().scale(y).orient("left"));
+
+ 	var path = graph.append("g")
+ 		.append("path")
+ 		.data([data])
+ 		.attr("class", "line")
+ 		.attr("d", line);
+
+     tick(this.data);
+
+     var cont = 0;
+     function tick()
+ 	{
+         data.push(next());
+
+         // update domain
+         x.domain([t - n, t]);
+
+         // redraw path, shift path left
+         path
+             .attr("d", line)
+             .attr("transform", null)
+             .transition()
+             .duration(1)
+             .ease("linear")
+             .attr("transform", "translate(" + t - 1 + ")")
+             .each("end", tick);
+
+         // shift axis left
+         axis
+             .transition()
+             .duration(1)
+             .ease("linear")
+             .call(d3.svg.axis().scale(x).orient("bottom"));
+
+         // pop the old data point off the front
+         data.shift();
+     }
+
+    </script>
+  </body>
+</html>
